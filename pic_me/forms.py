@@ -46,3 +46,16 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'email']
+
+
+class PhotoUploadForm(forms.ModelForm):
+    """
+    Form for uploading new photos to the gallery.
+    """
+    class Meta:
+        model = Photo
+        fields = ['title', 'description', 'image', 'tags']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'tags': forms.CheckboxSelectMultiple(),
+        }
