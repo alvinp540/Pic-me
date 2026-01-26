@@ -1,5 +1,14 @@
 from django.shortcuts import render
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Q, Count
+from .models import Photo, Tag, PhotoInteraction, UserProfile
+from .forms import UserRegistrationForm, UserProfileForm, UserUpdateForm, PhotoUploadForm
+
+
 # Create your views here.
 
 def home(request):
@@ -92,3 +101,75 @@ def user_login(request):
             messages.error(request, 'Invalid username or password.')
     
     return render(request, 'pic_me/login.html')
+
+
+def user_logout(request):
+    """
+    Handle user logout.
+    """
+    logout(request)
+    messages.info(request, 'You have been logged out successfully.')
+    return redirect('home')
+
+
+@login_required
+def profile(request):
+    """
+    Display and update user profile information.
+    """
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile')
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = UserProfileForm(instance=profile)
+    
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    }
+    return render(request, 'pic_me/profile.html', context)
+
+
+@login_required
+def interact_photo(request, photo_id):
+    """
+    Handle user interactions with photos.
+    """
+    if request.method == 'POST':
+        photo = get_object_or_404(Photo, id=photo_id)
+        interaction_type = request.POST.get('interaction_type')
+        
+        if interaction_type not in ['like', 'dislike']:
+            messages.error(request, 'Invalid interaction type.')
+            return redirect('photo_detail', photo_id=photo_id)
+        
+        interaction, created = PhotoInteraction.objects.get_or_create(
+            user=request.user,
+            photo=photo,
+            defaults={'interaction_type': interaction_type}
+        )
+        
+        if not created:
+            if interaction.interaction_type == interaction_type:
+                interaction.delete()
+                messages.info(request, f'{interaction_type.capitalize()} removed.')
+            else:
+                interaction.interaction_type = interaction_type
+                interaction.save()
+                messages.success(request, f'Changed to {interaction_type}.')
+        else:
+            messages.success(request, f'Photo {interaction_type}d!')
+        
+        return redirect('photo_detail', photo_id=photo_id)
+    
+    return redirect('home')
+
