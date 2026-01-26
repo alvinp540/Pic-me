@@ -117,7 +117,7 @@ class PhotoInteraction(models.Model):
         ('dislike', 'Dislike'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='interactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='interactions') # User who interacted on deletion related interactions are deleted
     photo = models.ForeignKey(Photo, on_delete=models.CASCADE, related_name='interactions')
     interaction_type = models.CharField(max_length=10, choices=INTERACTION_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
