@@ -43,37 +43,7 @@ class Tag(models.Model):
     class Meta:
         ordering = ['name']
         
-class Photo(models.Model):
-    """
-    Photo model representing individual photos in the gallery.
-    Includes title, description, tags, and tracks user interactions.
-    """
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    image = models.ImageField(
-        upload_to='photos/',
-        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'gif'])]
-    )
-    tags = models.ManyToManyField(Tag, related_name='photos', blank=True)
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='photos')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.title
-
-    def total_likes(self):
-        """Calculate total number of likes for this photo."""
-        return self.interactions.filter(interaction_type='like').count()
-
-    def total_dislikes(self):
-        """Calculate total number of dislikes for this photo."""
-        return self.interactions.filter(interaction_type='dislike').count()
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Photo'
-        verbose_name_plural = 'Photos'
 
 class Photo(models.Model):
     """
@@ -128,4 +98,5 @@ class PhotoInteraction(models.Model):
         verbose_name_plural = 'Photo Interactions'
 
     def __str__(self):
-        return f"{self.user.username} {self.interaction_type}d {self.photo.title}"
+        verb = 'liked' if self.interaction_type == 'like' else 'disliked'
+        return f"{self.user.username} {verb} {self.photo.title}"
