@@ -106,3 +106,26 @@ class Photo(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Photo'
         verbose_name_plural = 'Photos'
+
+class PhotoInteraction(models.Model):
+    """
+    Model to track user interactions with photos.
+    Ensures a user can only have one interaction per photo.
+    """
+    INTERACTION_CHOICES = [
+        ('like', 'Like'),
+        ('dislike', 'Dislike'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='interactions')
+    photo = models.ForeignKey(Photo, on_delete=models.CASCADE, related_name='interactions')
+    interaction_type = models.CharField(max_length=10, choices=INTERACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'photo')
+        verbose_name = 'Photo Interaction'
+        verbose_name_plural = 'Photo Interactions'
+
+    def __str__(self):
+        return f"{self.user.username} {self.interaction_type}d {self.photo.title}"
