@@ -49,3 +49,46 @@ def photo_detail(request, photo_id):
         'total_dislikes': photo.total_dislikes(),
     }
     return render(request, 'pic_me/photo_detail.html', context)
+
+def register(request):
+    """
+    Handle user registration with form validation.
+    """
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f'Account created successfully for {user.username}!')
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserRegistrationForm()
+    
+    return render(request, 'pic_me/register.html', {'form': form})
+
+
+def user_login(request):
+    """
+    Handle user login with authentication.
+    """
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'Welcome back, {username}!')
+            return redirect(request.GET.get('next', 'home'))
+        else:
+            messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'pic_me/login.html')
