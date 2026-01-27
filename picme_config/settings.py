@@ -120,3 +120,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Custom user model
+AUTH_USER_MODEL = 'pic_me.CustomUser'
+
+# Authentication backends - custom email backend first, fallback to default
+AUTHENTICATION_BACKENDS = [
+    'pic_me.backends.EmailAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
