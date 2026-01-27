@@ -126,6 +126,6 @@ AUTH_USER_MODEL = 'pic_me.CustomUser'
 
 # Authentication backends - custom email backend first, fallback to default
 AUTHENTICATION_BACKENDS = [
-    'pic_me.backends.EmailAuthBackend',
+    'pic_me.backends.CustomAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
