@@ -11,17 +11,34 @@
 <div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem;">
     <!-- Sidebar -->
     <div class="card" style="height: fit-content;">
+        <!-- Profile Picture -->
         <div style="text-align: center; margin-bottom: 1.5rem;">
+            {% if user.profile.profile_picture %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" id="sidebarProfilePic" style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-color); margin-bottom: 1rem;">
+            {% else %}
+            <div id="sidebarProfilePic" style="width: 180px; height: 180px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; border: 4px solid var(--primary-color);">
+                <span style="font-size: 4rem; color: white; font-weight: bold;">{{ user.username.0|upper }}</span>
+            </div>
+            {% endif %}
+            
             <h2>{{ user.username }}</h2>
             <p style="color: var(--text-light); font-size: 0.9rem;">{{ user.email }}</p>
         </div>
 
-        <div style="padding: 1rem 0; border-top: 1px solid var(--border-color);">
+        <!-- Bio -->
+        {% if user.profile.bio %}
+        <div style="padding: 1rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem;">Bio</p>
+            <p style="font-size: 0.95rem;">{{ user.profile.bio }}</p>
+        </div>
+        {% endif %}
+
+        <div style="padding: 1rem 0; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
             <p style="font-size: 0.9rem; color: var(--text-light);">Member Since</p>
             <p style="font-weight: bold;">{{ user.date_joined|date:"F j, Y" }}</p>
         </div>
 
-        <a href="{% url 'home' %}" class="btn btn-light" style="width: 100%; text-align: center; margin-top: 1rem;">Back to Gallery</a>
+        <a href="{% url 'home' %}" class="btn btn-light" style="width: 100%; text-align: center;">Back to Gallery</a>
     </div>
 
     <!-- Main Content -->
@@ -62,7 +79,13 @@
                     {% if field.name == 'profile_picture' %}
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">Profile Picture</label>
-                        <input type="file" name="profile_picture" accept="image/*" id="{{ field.id_for_label }}">
+                        {% if user.profile.profile_picture %}
+                        <div style="margin-bottom: 1rem;">
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.5rem;">Current Picture:</p>
+                            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" id="currentProfilePic" style="width: 120px; height: 120px; border-radius: 0.5rem; object-fit: cover; border: 2px solid var(--border-color);">
+                        </div>
+                        {% endif %}
+                        <input type="file" name="profile_picture" accept="image/*" id="{{ field.id_for_label }}" onchange="previewProfilePicture(event)">
                         <p style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG (max 5MB)</p>
                         {% if field.errors %}<p style="color: var(--danger-color);">{{ field.errors.0 }}</p>{% endif %}
                     </div>
@@ -85,4 +108,37 @@
         </form>
     </div>
 </div>
+
+<script>
+function previewProfilePicture(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const sidebarPic = document.getElementById('sidebarProfilePic');
+            
+            // Replace the avatar div with an image
+            if (sidebarPic.tagName === 'DIV') {
+                const img = document.createElement('img');
+                img.id = 'sidebarProfilePic';
+                img.src = e.target.result;
+                img.alt = '{{ user.username }}';
+                img.style = 'width: 180px; height: 180px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-color); margin-bottom: 1rem;';
+                sidebarPic.parentNode.replaceChild(img, sidebarPic);
+            } else {
+                // Update existing image
+                sidebarPic.src = e.target.result;
+            }
+            
+            // Update current picture preview in form
+            const currentPic = document.getElementById('currentProfilePic');
+            if (currentPic) {
+                currentPic.src = e.target.result;
+                currentPic.style.borderColor = 'var(--success-color)';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
+</script>
 {% endblock %}

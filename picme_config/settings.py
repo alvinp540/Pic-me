@@ -131,6 +131,20 @@ AUTHENTICATION_BACKENDS = [
     'pic_me.backends.CustomAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development - prints to console
+# For production, use:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+# EMAIL_PORT = config('EMAIL_PORT', cast=int, default=587)
+# EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool, default=True)
+# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+DEFAULT_FROM_EMAIL = 'noreply@picme.com'
+SERVER_EMAIL = 'server@picme.com'
+
 # Media files (user uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

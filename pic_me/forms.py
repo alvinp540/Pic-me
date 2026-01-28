@@ -46,6 +46,7 @@ class UserProfileForm(forms.ModelForm):
         fields = ['bio', 'profile_picture']
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4}),
+            'profile_picture': forms.FileInput(attrs={'onchange': 'previewProfilePicture(event)'}),
         }
 
 
