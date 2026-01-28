@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - PicMe{% endblock %}
+
+{% block content %}
+<div class="hero mb-4">
+    <h1>My Profile</h1>
+    <p>Manage your account</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 250px 1fr; gap: 2rem;">
+    <!-- Sidebar -->
+    <div class="card" style="height: fit-content;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h2>{{ user.username }}</h2>
+            <p style="color: var(--text-light); font-size: 0.9rem;">{{ user.email }}</p>
+        </div>
+
+        <div style="padding: 1rem 0; border-top: 1px solid var(--border-color);">
+            <p style="font-size: 0.9rem; color: var(--text-light);">Member Since</p>
+            <p style="font-weight: bold;">{{ user.date_joined|date:"F j, Y" }}</p>
+        </div>
+
+        <a href="{% url 'home' %}" class="btn btn-light" style="width: 100%; text-align: center; margin-top: 1rem;">Back to Gallery</a>
+    </div>
+
+    <!-- Main Content -->
+    <div>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Account Info -->
+            <div class="card mb-4">
+                <h2 style="margin-bottom: 1.5rem;">Account Information</h2>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" value="{{ user.username }}" disabled>
+                    <p style="font-size: 0.85rem; color: var(--text-light);">Cannot be changed</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" value="{{ user.email }}" disabled>
+                </div>
+            </div>
+
+            <!-- Profile Settings -->
+            <div class="card mb-4">
+                <h2 style="margin-bottom: 1.5rem;">Profile Settings</h2>
+
+                {% for field in profile_form %}
+                    {% if field.name == 'bio' %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">Bio</label>
+                        <textarea name="bio" id="{{ field.id_for_label }}">{{ field.value }}</textarea>
+                        <p style="font-size: 0.85rem; color: var(--text-light);">Tell us about yourself (max 500 characters)</p>
+                        {% if field.errors %}<p style="color: var(--danger-color);">{{ field.errors.0 }}</p>{% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if field.name == 'profile_picture' %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">Profile Picture</label>
+                        <input type="file" name="profile_picture" accept="image/*" id="{{ field.id_for_label }}">
+                        <p style="font-size: 0.85rem; color: var(--text-light);">PNG, JPG (max 5MB)</p>
+                        {% if field.errors %}<p style="color: var(--danger-color);">{{ field.errors.0 }}</p>{% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card" style="background: #FEF2F2; border: 1px solid #FCA5A5;">
+                <h2 style="color: #991B1B; margin-bottom: 1.5rem;">Danger Zone</h2>
+                <p style="color: #7F1D1D; margin-bottom: 1rem;">Change your password or other security settings.</p>
+                <a href="{% url 'password_reset' %}" class="btn btn-danger">Change Password</a>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'home' %}" class="btn btn-light">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -5,6 +5,9 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.contrib.auth.forms import PasswordResetForm
+from django.urls import reverse_lazy
 from .models import Photo, Tag, PhotoInteraction, UserProfile
 from .forms import UserRegistrationForm, UserProfileForm, UserUpdateForm, PhotoUploadForm
 
@@ -35,14 +38,14 @@ def home(request):
         'selected_tag': tag_filter,
         'search_query': search_query,
     }
-    return render(request, 'pic_me/home.html', context)
+    return render(request, 'home.html', context)
 
 
-def photo_detail(request, photo_id):
+def photo_detail(request, id):
     """
     Display detailed information for a specific photo.
     """
-    photo = get_object_or_404(Photo, id=photo_id)
+    photo = get_object_or_404(Photo, id=id)
     user_interaction = None
     
     if request.user.is_authenticated:
@@ -57,7 +60,7 @@ def photo_detail(request, photo_id):
         'total_likes': photo.total_likes(),
         'total_dislikes': photo.total_dislikes(),
     }
-    return render(request, 'pic_me/photo_detail.html', context)
+    return render(request, 'photo_detail.html', context)
 
 def register(request):
     """
@@ -71,14 +74,14 @@ def register(request):
         if form.is_valid():
             user = form.save()
             messages.success(request, f'Account created successfully for {user.username}!')
-            login(request, user)
+            login(request, user, backend='pic_me.backends.CustomAuthBackend')
             return redirect('home')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
         form = UserRegistrationForm()
     
-    return render(request, 'pic_me/register.html', {'form': form})
+    return render(request, 'register.html', {'form': form})
 
 
 def user_login(request):
@@ -89,18 +92,18 @@ def user_login(request):
         return redirect('home')
     
     if request.method == 'POST':
-        username = request.POST.get('username')
+        email = request.POST.get('email')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, email=email, password=password)
         
         if user is not None:
-            login(request, user)
-            messages.success(request, f'Welcome back, {username}!')
+            login(request, user, backend='pic_me.backends.CustomAuthBackend')
+            messages.success(request, f'Welcome back, {user.username}!')
             return redirect(request.GET.get('next', 'home'))
         else:
-            messages.error(request, 'Invalid username or password.')
+            messages.error(request, 'Invalid email or password.')
     
-    return render(request, 'pic_me/login.html')
+    return render(request, 'login.html')
 
 
 def user_logout(request):
@@ -136,21 +139,21 @@ def profile(request):
         'user_form': user_form,
         'profile_form': profile_form,
     }
-    return render(request, 'pic_me/profile.html', context)
+    return render(request, 'profile.html', context)
 
 
 @login_required
-def interact_photo(request, photo_id):
+def interact_photo(request, id):
     """
     Handle user interactions with photos.
     """
     if request.method == 'POST':
-        photo = get_object_or_404(Photo, id=photo_id)
+        photo = get_object_or_404(Photo, id=id)
         interaction_type = request.POST.get('interaction_type')
         
         if interaction_type not in ['like', 'dislike']:
             messages.error(request, 'Invalid interaction type.')
-            return redirect('photo_detail', photo_id=photo_id)
+            return redirect('photo_detail', id=id)
         
         interaction, created = PhotoInteraction.objects.get_or_create(
             user=request.user,
@@ -169,7 +172,26 @@ def interact_photo(request, photo_id):
         else:
             messages.success(request, f'Photo {interaction_type}d!')
         
-        return redirect('photo_detail', photo_id=photo_id)
+        return redirect('photo_detail', id=id)
     
     return redirect('home')
 
+
+# Password Reset Views
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'password_reset.html'
+    form_class = PasswordResetForm
+    success_url = reverse_lazy('password_reset_done')
+
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'password_reset_done.html'
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'password_reset_complete.html'

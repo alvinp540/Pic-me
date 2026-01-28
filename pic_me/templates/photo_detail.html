@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ photo.title }} - PicMe{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'home' %}" style="color: var(--primary-color); text-decoration: none;">&larr; Back to Gallery</a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+    <!-- Main Photo -->
+    <div>
+        <div style="background: var(--light-bg); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+            {% load static %}
+            <img src="{{ photo.image.url }}" alt="{{ photo.title }}" style="width: 100%; height: auto; border-radius: 0.5rem;">
+        </div>
+
+        <div class="card">
+            <h1>{{ photo.title }}</h1>
+            <p style="color: var(--text-light); margin: 1rem 0;">
+                By {{ photo.uploaded_by.username }} on {{ photo.created_at|date:"F j, Y" }}
+            </p>
+
+            {% if photo.description %}
+            <div style="margin: 2rem 0;">
+                <h3>Description</h3>
+                <p>{{ photo.description }}</p>
+            </div>
+            {% endif %}
+
+            {% if photo.tags.all %}
+            <div>
+                <h3>Tags</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for tag in photo.tags.all %}
+                    <a href="{% url 'home' %}?tag={{ tag.slug }}" style="padding: 0.25rem 0.75rem; background: #EFF6FF; color: var(--primary-color); border-radius: 0.25rem; text-decoration: none;">#{{ tag.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Stats -->
+        <div class="card mb-4">
+            <h3>Stats</h3>
+            <div style="margin-top: 1rem;">
+                <p>Likes: <strong>{{ total_likes }}</strong></p>
+                <p>Dislikes: <strong>{{ total_dislikes }}</strong></p>
+            </div>
+        </div>
+
+        <!-- Interactions -->
+        {% if user.is_authenticated %}
+        <div class="card">
+            <h3>Rate Photo</h3>
+            <form method="post" action="{% url 'interact_photo' photo.id %}" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                {% csrf_token %}
+                <button type="submit" name="interaction_type" value="like" class="btn btn-primary">Like</button>
+                <button type="submit" name="interaction_type" value="dislike" class="btn btn-light">Dislike</button>
+            </form>
+
+            {% if user_interaction %}
+            <div style="background: #EFF6FF; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; color: var(--primary-color);">
+                <strong>You marked as:</strong> {{ user_interaction.interaction_type|title }}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p><strong>Sign in to rate this photo</strong></p>
+            <a href="{% url 'login' %}" class="btn btn-primary" style="display: block; margin-top: 0.5rem; text-align: center;">Login</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

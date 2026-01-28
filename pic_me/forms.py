@@ -11,6 +11,7 @@ User = get_user_model()
 class UserRegistrationForm(UserCreationForm):
     """
     Extended user registration form with email field.
+    Automatically creates a UserProfile via post_save signal.
     """
     email = forms.EmailField(required=True, help_text="Required. Enter a valid email address.")
 
@@ -23,13 +24,22 @@ class UserRegistrationForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         if commit:
             user.save()
-            UserProfile.objects.create(user=user)
         return user
+
+
+class CustomUserForm(forms.ModelForm):
+    """
+    Form for updating CustomUser information (username, first_name, last_name, email).
+    Follows the guide pattern for basic user information updates.
+    """
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
 
 
 class UserProfileForm(forms.ModelForm):
     """
-    Form for updating user profile information.
+    Form for updating user profile information (bio and profile picture).
     """
     class Meta:
         model = UserProfile

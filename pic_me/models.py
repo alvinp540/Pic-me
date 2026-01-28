@@ -3,6 +3,12 @@ from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+from django.core.files.base import ContentFile
+from io import BytesIO
+from PIL import Image
+import os
 
 
 class CustomUserManager(BaseUserManager):
@@ -51,7 +57,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class UserProfile(models.Model):
     """
     Extended user profile model containing additional user information.
-    Linked to Django's built-in User model via OneToOne relationship.
+    Linked to the CustomUser model via OneToOne relationship.
+    Automatically created when a new user is created via post_save signal.
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(max_length=500, blank=True, help_text="Tell us about yourself")
@@ -70,6 +77,25 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = 'User Profile'
         verbose_name_plural = 'User Profiles'
+
+
+# Signal handlers for automatic profile creation and saving
+@receiver(post_save, sender=CustomUser)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Create a UserProfile when a new CustomUser is created.
+    """
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=CustomUser)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Save the UserProfile when the CustomUser is saved.
+    """
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 
 class Tag(models.Model):
@@ -114,6 +140,66 @@ class Photo(models.Model):
     def total_dislikes(self):
         """Calculate total number of dislikes for this photo."""
         return self.interactions.filter(interaction_type='dislike').count()
+
+    @staticmethod
+    def create_placeholder_image(width=400, height=300, color=(100, 150, 200), text=""):
+        """
+        Create a placeholder image programmatically.
+        Returns a PIL Image object.
+        
+        Args:
+            width: Image width in pixels (default 400)
+            height: Image height in pixels (default 300)
+            color: RGB tuple for background color (default light blue)
+            text: Text to display on the image (default empty)
+        
+        Returns:
+            PIL Image object
+        """
+        image = Image.new('RGB', (width, height), color=color)
+        return image
+
+    @staticmethod
+    def create_solid_image(width=400, height=300, color=(100, 150, 200)):
+        """
+        Create a solid color image.
+        Returns the image as a ContentFile suitable for ImageField.
+        """
+        image = Photo.create_placeholder_image(width, height, color)
+        
+        # Convert to bytes
+        image_bytes = BytesIO()
+        image.save(image_bytes, format='PNG')
+        image_bytes.seek(0)
+        
+        return ContentFile(image_bytes.getvalue(), name='placeholder.png')
+
+    @classmethod
+    def create_with_placeholder(cls, title, description, uploaded_by, color=(100, 150, 200), tags=None):
+        """
+        Create a Photo with a generated placeholder image.
+        
+        Args:
+            title: Photo title
+            description: Photo description
+            uploaded_by: User object who uploaded the photo
+            color: RGB tuple for background color
+            tags: List of Tag objects to associate with photo
+            
+        Returns:
+            Photo object
+        """
+        photo = cls.objects.create(
+            title=title,
+            description=description,
+            uploaded_by=uploaded_by,
+            image=cls.create_solid_image(color=color)
+        )
+        
+        if tags:
+            photo.tags.set(tags)
+        
+        return photo
 
     class Meta:
         ordering = ['-created_at']

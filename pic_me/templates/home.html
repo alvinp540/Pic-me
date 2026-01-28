@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Gallery - PicMe{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="hero">
+    <h1>Welcome to PicMe</h1>
+    <p>Discover amazing photos from around the world</p>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <form method="get" id="search-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="form-group">
+            <input type="text" name="search" placeholder="Search photos..." value="{{ search_query }}">
+        </div>
+        <div class="form-group">
+            <select name="tag">
+                <option value="">All Tags</option>
+                {% for tag in tags %}
+                <option value="{{ tag.slug }}" {% if selected_tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <button type="submit" class="btn btn-primary" form="search-form">Search</button>
+        <a href="{% url 'home' %}" class="btn btn-light">Clear</a>
+    </div>
+</div>
+
+<!-- Photos Grid -->
+<div class="grid grid-4">
+    {% for photo in photos %}
+    <div class="card">
+        <div style="height: 150px; background: url('{{ photo.image.url }}') center/cover; margin: -1.5rem -1.5rem 1rem -1.5rem; border-radius: 0.5rem 0.5rem 0 0;"></div>
+        <h3 style="margin-bottom: 0.5rem;">{{ photo.title }}</h3>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem;">{{ photo.description|truncatewords:10 }}</p>
+        
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem;">
+            <span>Likes: {{ photo.total_likes }}</span>
+            <span>Dislikes: {{ photo.total_dislikes }}</span>
+        </div>
+
+        {% if photo.tags.all %}
+        <div style="margin-bottom: 1rem;">
+            {% for tag in photo.tags.all %}
+            <a href="?tag={{ tag.slug }}" style="display: inline-block; padding: 0.25rem 0.5rem; background: #EFF6FF; color: var(--primary-color); border-radius: 0.25rem; font-size: 0.85rem; margin-right: 0.5rem; text-decoration: none;">#{{ tag.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a href="{% url 'photo_detail' photo.id %}" class="btn btn-primary" style="width: 100%; text-align: center;">View</a>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+        <h3>No photos found</h3>
+        <p class="text-muted">{% if search_query or selected_tag %}Try different filters{% else %}Be the first to upload!{% endif %}</p>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'register' %}" class="btn btn-primary mt-3">Sign up to upload</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
