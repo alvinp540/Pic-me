@@ -28,8 +28,10 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['https://pic-me.onrender.com']
-
+ALLOWED_HOSTS = ['pic-me.onrender.com','127.0.0.1']
+CORS_ALLOWED_ORIGINS = [
+    'https://pic-me.onrender.com',
+]
 
 # Application definition
 
@@ -124,7 +126,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-
+CORS_ALLOW_ALL_ORIGINS = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
