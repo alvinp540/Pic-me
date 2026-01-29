@@ -131,9 +131,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'pic_me/static']
+STATICFILES_DIRS = [ os.path.join(BASE_DIR, 'static')]
 
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Custom user model
 AUTH_USER_MODEL = 'pic_me.CustomUser'
